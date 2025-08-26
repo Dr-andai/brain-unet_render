@@ -1,3 +1,9 @@
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.append(str(ROOT))
+
 # Library setup
 import torch
 import numpy as np
@@ -6,7 +12,7 @@ from model.unet import UNet
 
 # Load the model first
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model_path = "model/unet_epoch20.pth"
+model_path = "model/unet_epoch19.pth"
 
 model = UNet(in_channels=1, out_channels=3).to(device)
 model.load_state_dict(torch.load(model_path, map_location=device))

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Brain MRI Segmentation (U-Net)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    form {
+      margin: 20px 0;
+      padding: 20px;
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      background: #fff;
+      text-align: center;
+    }
+    input[type="file"] {
+      margin: 10px 0;
+    }
+    button {
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .result {
+      margin-top: 30px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .result img {
+      max-width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .stats {
+      list-style: none;
+      padding: 0;
+    }
+    .stats li {
+      padding: 6px 0;
+      font-size: 1rem;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Brain MRI Segmentation (U-Net)</h1>
+
+  <form action="/segment" method="post" enctype="multipart/form-data">
+    <p>Upload a T1-weighted brain slice (.png, .jpg, .jpeg)</p>
+    <input type="file" name="file" accept=".png,.jpg,.jpeg" required>
+    <br><br>
+    <button type="submit">Segment Image</button>
+  </form>
+
+  {% if error %}
+    <p class="error">{{ error }}</p>
+  {% endif %}
+
+  {% if result %}
+    <div class="result">
+      <h2>Segmented Output</h2>
+      <img src="{{ result }}" alt="Segmentation Result">
+    </div>
+  {% endif %}
+
+  {% if stats %}
+    <div class="result">
+      <h3>Tissue Composition (%)</h3>
+      <ul class="stats">
+        {% for label, value in stats.items() %}
+          <li><strong>{{ label }}</strong>: {{ value * 100 }}%</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+</body
