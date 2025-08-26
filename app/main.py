@@ -1,6 +1,9 @@
-def main():
-    print("Hello from brain-unet-render!")
+from fastapi import FastAPI, File, UploadFile, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from PIL import Image
+import io
 
 
-if __name__ == "__main__":
-    main()
+from app.inference import segment
