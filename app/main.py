@@ -1,46 +1,45 @@
-import sys
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.append(str(ROOT))
-
-from fastapi import FastAPI, File, UploadFile, Request
+from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from pathlib import Path
 from PIL import Image
-import io
-import os
+import time
 
 from app.inference import segment
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = os.path.join(BASE_DIR, "static")
-UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
-RESULT_DIR = "static"
-
-os.makedirs(RESULT_DIR, exist_ok=True)
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
+EXAMPLE_DIR = STATIC_DIR / "examples"
+RESULT_PATH = STATIC_DIR / "result.png"
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-
 templates = Jinja2Templates(directory="app/templates")
-
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    example_images = [f.name for f in EXAMPLE_DIR.iterdir() if f.suffix.lower() in [".png", ".jpg", ".jpeg"]]
+    return templates.TemplateResponse("index.html", {"request": request, "example_images": example_images})
 
 @app.post("/segment", response_class=HTMLResponse)
-async def run_segmentation(request: Request, file: UploadFile = File(...)):
-    if not (file.filename.lower().endswith(".png") or file.filename.lower().endswith(".jpg") or file.filename.lower().endswith(".jpeg")):
-        return templates.TemplateResponse(
-            "index.html",
-            {"request": request, "error": "Only .png or .jpg images are supported."},
-            )
-    
-    img = Image.open(io.BytesIO(await file.read()))
-    output_img, pred = segment(img)
+async def run_segmentation(
+    request: Request,
+    model: str = Form(...),
+    image_name: str = Form(...)
+):
+    # Resolve paths
+    model_path = Path("model") / model
+    image_path = EXAMPLE_DIR / image_name
+
+    # Load image
+    img = Image.open(image_path)
+
+    # Run segmentation
+    output_img, pred = segment(img, model_path)
+
+    # Save result
+    output_img.save(RESULT_PATH)
 
     # Stats
     total = pred.size
@@ -48,16 +47,11 @@ async def run_segmentation(request: Request, file: UploadFile = File(...)):
         "Background": round((pred == 0).sum() / total, 2),
         "Gray Matter": round((pred == 1).sum() / total, 2),
         "White Matter": round((pred == 2).sum() / total, 2),
-        }
-    
-    # Save result temporarily
-    result_filename = "result.png"
-    result_path = os.path.join(STATIC_DIR, result_filename)
-    output_img.save(result_path)
-    
+    }
+
+    result_url = f"/static/result.png?ts={int(time.time())}"
+
     return templates.TemplateResponse(
-        "index.html",
-        {"request": request,
-         "result": f"/static/{result_filename}",
-        "stats": stats,},
-        )
+        "partials/result.html",
+        {"request": request, "result": result_url, "stats": stats}
+    )

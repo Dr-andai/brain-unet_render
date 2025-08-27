@@ -1,0 +1,10 @@
+<div>
+  <h3>Segmentation Result</h3>
+  <img src="{{ result }}" alt="Segmented Result">
+  <ul>
+    {% for label, value in stats.items() %}
+      <li><b>{{ label }}:</b> {{ value }}</li>
+    {% endfor %}
+  </ul>
+  <button hx-get="/" hx-target="body" hx-swap="outerHTML">Try Another Image</button>
+</div>

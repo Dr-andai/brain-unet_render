@@ -1,0 +1,15 @@
+<!-- partials/gallery.html -->
+<div id="main-container">
+  <h3>Select Example Image</h3>
+  <div id="gallery-container" class="gallery">
+    {% for img in example_images %}
+      <img 
+        src="/static/examples/{{ img }}" 
+        hx-post="/segment" 
+        hx-include="#model" 
+        hx-vals='{"image_name": "{{ img }}"}'
+        hx-target="#main-container" 
+        hx-swap="innerHTML">
+    {% endfor %}
+  </div>
+</div>
