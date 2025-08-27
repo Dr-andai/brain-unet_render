@@ -2,98 +2,61 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Brain MRI Segmentation (U-Net)</title>
+  <title>Brain MRI Segmentation</title>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 20px;
-      background-color: #f9f9f9;
-    }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-    form {
-      margin: 20px 0;
-      padding: 20px;
-      border: 2px dashed #ccc;
-      border-radius: 8px;
-      background: #fff;
-      text-align: center;
-    }
-    input[type="file"] {
-      margin: 10px 0;
-    }
-    button {
-      padding: 10px 20px;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    .result {
-      margin-top: 30px;
-      padding: 20px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .result img {
-      max-width: 100%;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-    .stats {
-      list-style: none;
-      padding: 0;
-    }
-    .stats li {
-      padding: 6px 0;
-      font-size: 1rem;
-    }
-    .error {
-      color: red;
-      font-weight: bold;
-      margin-top: 10px;
-    }
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 30px auto; }
+    h1 { text-align: center; }
+    .gallery { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    .gallery img { width: 150px; height: 150px; object-fit: cover; cursor: pointer; border-radius: 6px; border: 2px solid transparent; }
+    .gallery img:hover { border-color: #007bff; }
+    .result { margin-top: 20px; }
   </style>
 </head>
 <body>
   <h1>Brain MRI Segmentation (U-Net)</h1>
+  <p>
+  This demo showcases a <b>U-Net–based deep learning model</b> for automatic 
+  <b>brain MRI tissue segmentation</b>. 
+  By selecting one of the trained U-Net models and an example MRI slice, 
+  you can visualize how the model partitions brain structures such as 
+  <i>gray matter</i> and <i>white matter</i>. 
+</p>
+<p>
+  The three model options correspond to <b>different training epochs</b> 
+  (<i>early, mid, late</i>). Comparing them allows you to see how the segmentation 
+  quality evolves as the network learns:<br>  
+  - Early epochs may produce rough or incomplete masks.<br>  
+  - Later epochs tend to refine boundaries and improve accuracy.  
+</p>
 
-  <form action="/segment" method="post" enctype="multipart/form-data">
-    <p>Upload a T1-weighted brain slice (.png, .jpg, .jpeg)</p>
-    <input type="file" name="file" accept=".png,.jpg,.jpeg" required>
-    <br><br>
-    <button type="submit">Segment Image</button>
-  </form>
+  <!-- Step 1: Model Selection -->
+  <div>
+    <label for="model"><b>Choose Model:</b></label>
+    <select id="model" name="model">
+      <option value="unet_epoch2.pth">U-Net v1</option>
+      <option value="unet_epoch9.pth">U-Net v2</option>
+      <option value="unet_epoch20.pth">U-Net v3</option>
+    </select>
+  </div>
 
-  {% if error %}
-    <p class="error">{{ error }}</p>
-  {% endif %}
+  <hr>
 
-  {% if result %}
-    <div class="result">
-      <h2>Segmented Output</h2>
-      <img src="{{ result }}" alt="Segmentation Result">
-    </div>
-  {% endif %}
+  <!-- Step 2: Example Images -->
+  <h3>Select Example Image</h3>
+  <div class="gallery">
+    {% for img in example_images %}
+      <img 
+        src="/static/examples/{{ img }}" 
+        hx-post="/segment" 
+        hx-include="#model" 
+        hx-vals='{"image_name": "{{ img }}"}'
+        hx-target="#result-container" 
+        hx-swap="innerHTML">
+    {% endfor %}
+  </div>
 
-  {% if stats %}
-    <div class="result">
-      <h3>Tissue Composition (%)</h3>
-      <ul class="stats">
-        {% for label, value in stats.items() %}
-          <li><strong>{{ label }}</strong>: {{ value * 100 }}%</li>
-        {% endfor %}
-      </ul>
-    </div>
-  {% endif %}
-</body
+  <!-- Step 3: Result -->
+  <div id="result-container" class="result"></div>
+</body>
+</html>
